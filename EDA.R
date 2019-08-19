@@ -40,7 +40,11 @@ GetPivotCounties <- function(election_returns, county_unemployment) {
   pivot_counties <- merge(pivot_counties, county_unemployment, all = FALSE)
   
   # remove unnecessary columns
-  pivot_counties[, c('State', 'Area_name', 'Rural_urban_continuum_code_2013', 'Urban_influence_code_2013', 'Metro_2013') := NULL]
+  pivot_counties[, c('State',
+                     'Area_name',
+                     'Rural_urban_continuum_code_2013',
+                     'Urban_influence_code_2013',
+                     'Metro_2013') := NULL]
   
   return(pivot_counties)
 }
