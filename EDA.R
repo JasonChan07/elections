@@ -1,6 +1,7 @@
 library(data.table)
 library(ggplot2)
 library(dplyr)
+library(stringr)
 
 # Load data
 election_returns <- fread('countypres_2000-2016.csv')
@@ -14,13 +15,25 @@ senate_2016 <- fread('2016-precinct-senate.csv')
 ## What was turnout like in these pivot counties
 
 
-# pivot counties: voted Obama twice -> Trump
-pivot_counties <- election_returns[year > 2004, 
-                                   .SD[which.max(candidatevotes)], 
-                                   by = .(year, state, county)]
+GetPivotCounties <- function(DT) {
+  pivot_counties <- DT[year > 2004,
+                       .SD[which.max(candidatevotes)],
+                       by = .(year, state, county)]
+  
+  pivot_counties <- dcast(pivot_counties, state + county ~ candidate, length)
+  
+  names(pivot_counties) <- str_replace_all(names(pivot_counties), c(" " = "."))
+  
+  pivot_counties <- pivot_counties[Barack.Obama == 2 & Donald.Trump == 1][
+    , .(state, county)
+  ]
+  
+  return(pivot_counties)
+}
 
-pivot_counties <- pivot_counties[, 
-                         .(vote_history = list(candidate)), 
-                         by = .(county, state)]
 
-x <- pivot_counties[vote_history == c('Barack Obama', 'Barack Obama', 'Donald Trump')]
+pivot_counties <- GetPivotCounties(election_returns)
+
+
+senate_2016[, .(state, jurisdiction)]
+
