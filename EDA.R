@@ -2,6 +2,7 @@ library(data.table)
 library(ggplot2)
 library(dplyr)
 library(stringr)
+library(tidyr)
 
 # Load data
 
@@ -19,7 +20,7 @@ county_unemployment <- fread('county-unemployment.csv')
 ## What was turnout like in these pivot counties
 
 
-GetPivotCounties <- function(election_returns, county_unemployment) {
+GetCountyReturns <- function(election_returns, county_unemployment) {
   
   # winning candidate for each county
   pivot_counties <- election_returns[year > 2004,
@@ -29,9 +30,6 @@ GetPivotCounties <- function(election_returns, county_unemployment) {
   pivot_counties <- dcast(pivot_counties, state + county + FIPS ~ candidate, length)
   
   names(pivot_counties) <- str_replace_all(names(pivot_counties), c(" " = "."))
-  
-  pivot_counties <- pivot_counties[Barack.Obama == 2 & Donald.Trump == 1][
-    , .(state, county, FIPS)]
   
   # join pivot counties with county unemployment
   setkeyv(pivot_counties, 'FIPS')
@@ -46,15 +44,39 @@ GetPivotCounties <- function(election_returns, county_unemployment) {
                      'Urban_influence_code_2013',
                      'Metro_2013') := NULL]
   
+  # add indicator variable if county is pivot
+  pivot_counties[ , pivot_indicator := as.factor(ifelse(Barack.Obama == 2 & Donald.Trump == 1, 1, 0))]
+  
   return(pivot_counties)
 }
 
 
-pivot_counties <- GetPivotCounties(election_returns, county_unemployment)
+counties <- GetCountyReturns(election_returns, county_unemployment)
 
+# unemployment columns
+unemployment_rate <- c('state',
+                       'county',
+                       'pivot_indicator',
+                       'Unemployment_rate_2007', 
+                       'Unemployment_rate_2008', 
+                       'Unemployment_rate_2009',
+                       'Unemployment_rate_2010',
+                       'Unemployment_rate_2011',
+                       'Unemployment_rate_2012',
+                       'Unemployment_rate_2013',
+                       'Unemployment_rate_2014',
+                       'Unemployment_rate_2015',
+                       'Unemployment_rate_2016',
+                       'Unemployment_rate_2017',
+                       'Unemployment_rate_2018'
+                       )
 
+counties_ue <- counties[, unemployment_rate, with = FALSE]
 
+# convert to long
+counties_ue_long <- data.table(gather(counties_ue, year, unemployment, Unemployment_rate_2007:Unemployment_rate_2018, factor_key = TRUE))
 
+# remove non-numeric characters from year column
+counties_ue_long[, year := gsub("\\D+", "", year)]
 
-
-
+# plot county unemployment rates
