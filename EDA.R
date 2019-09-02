@@ -13,6 +13,7 @@ election_returns <- fread('countypres_2000-2016.csv')
 county_unemployment <- fread('county-unemployment.csv')
 
 ## What were the pivot counties from 2008-2016?
+## How large were the pivots (percentage swing)
 ## What demographics pivoted the most?
 ## What changes happend on a county-level from 2008-2016
 ## How did pivot counties vote in the midterms between 2008-2016
@@ -54,29 +55,43 @@ GetCountyReturns <- function(election_returns, county_unemployment) {
 counties <- GetCountyReturns(election_returns, county_unemployment)
 
 # unemployment columns
-unemployment_rate <- c('state',
+unemployment_rate <- c('FIPS',
+                       'state',
                        'county',
                        'pivot_indicator',
-                       'Unemployment_rate_2007', 
-                       'Unemployment_rate_2008', 
-                       'Unemployment_rate_2009',
-                       'Unemployment_rate_2010',
-                       'Unemployment_rate_2011',
-                       'Unemployment_rate_2012',
-                       'Unemployment_rate_2013',
-                       'Unemployment_rate_2014',
-                       'Unemployment_rate_2015',
-                       'Unemployment_rate_2016',
-                       'Unemployment_rate_2017',
-                       'Unemployment_rate_2018'
+                       'Civilian_labor_force_2007', 
+                       'Unemployed_2007', 
+                       'Civilian_labor_force_2008', 
+                       'Unemployed_2008',
+                       'Civilian_labor_force_2009', 
+                       'Unemployed_2009',
+                       'Civilian_labor_force_2010', 
+                       'Unemployed_2010',
+                       'Civilian_labor_force_2011', 
+                       'Unemployed_2011',
+                       'Civilian_labor_force_2012', 
+                       'Unemployed_2012',
+                       'Civilian_labor_force_2013', 
+                       'Unemployed_2013',
+                       'Civilian_labor_force_2014', 
+                       'Unemployed_2014',
+                       'Civilian_labor_force_2015', 
+                       'Unemployed_2015',
+                       'Civilian_labor_force_2016', 
+                       'Unemployed_2016',
+                       'Civilian_labor_force_2017', 
+                       'Unemployed_2017',
+                       'Civilian_labor_force_2018', 
+                       'Unemployed_2018'
                        )
 
-counties_ue <- counties[, unemployment_rate, with = FALSE]
+counties_ue_wide <- counties[, unemployment_rate, with = FALSE]
 
-# convert to long
-counties_ue_long <- data.table(gather(counties_ue, year, unemployment, Unemployment_rate_2007:Unemployment_rate_2018, factor_key = TRUE))
-
+# convert data from wide to long
+counties_ue_long <- melt(counties_ue_wide, id.vars = c('FIPS', 'state', 'county', 'pivot_indicator'), measure.vars = c(''))
+  
 # remove non-numeric characters from year column
 counties_ue_long[, year := gsub("\\D+", "", year)]
 
 # plot county unemployment rates
+
