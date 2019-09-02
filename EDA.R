@@ -6,6 +6,9 @@ library(tidyr)
 
 # Load data
 
+## set working directory
+setwd('/Users/jasonchan/Documents/DataProjects/elections')
+
 ## county election returns 2000-2016
 election_returns <- fread('countypres_2000-2016.csv')
 
@@ -54,12 +57,15 @@ GetCountyReturns <- function(election_returns, county_unemployment) {
 
 counties <- GetCountyReturns(election_returns, county_unemployment)
 
-# unemployment columns
-unemployment_rate <- c('FIPS',
-                       'state',
-                       'county',
-                       'pivot_indicator',
-                       'Civilian_labor_force_2007', 
+
+# county descriptions
+county_desc <- c('FIPS',
+                 'state',
+                 'county',
+                 'pivot_indicator')
+
+ # unemployment metrics
+unemployment_metrics <- c('Civilian_labor_force_2007', 
                        'Unemployed_2007', 
                        'Civilian_labor_force_2008', 
                        'Unemployed_2008',
@@ -85,13 +91,18 @@ unemployment_rate <- c('FIPS',
                        'Unemployed_2018'
                        )
 
-counties_ue_wide <- counties[, unemployment_rate, with = FALSE]
+counties_ue_wide <- counties[, c(county_desc, unemployment_metrics), with = FALSE]
 
 # convert data from wide to long
-counties_ue_long <- melt(counties_ue_wide, id.vars = c('FIPS', 'state', 'county', 'pivot_indicator'), measure.vars = c(''))
-  
-# remove non-numeric characters from year column
-counties_ue_long[, year := gsub("\\D+", "", year)]
+counties_ue_long <- reshape(counties_ue_wide,
+                            direction = 'long',
+                            varying = unemployment_metrics,
+                            timevar = 'year',
+                            times = as.character(seq(2007, 2018, 1)),
+                            v.names = c('unemployed', 'labor_force'),
+                            idvar = county_desc)
+                      
+
 
 # plot county unemployment rates
 
